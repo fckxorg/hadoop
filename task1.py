@@ -2,7 +2,6 @@
 import sys
 import subprocess
 
-command = ['hdfs', 'fsck', None, '-files', '-blocks', '-locations']
-command[2] = sys.argv[1]
-print(subprocess.check_output(command).decode('utf-8').split('\n')[1].split('from')[1].split()[0])
+command = ['hdfs', 'fsck', sys.argv[1], '-files', '-blocks', '-locations']
+print(subprocess.check_output(command).decode('utf-8').split('\n')[0].split('from')[1].split()[0][1:])
 
