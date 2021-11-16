@@ -13,5 +13,4 @@ HDFS output looks like the following:
 print(subprocess.check_output(command).decode('utf-8')
                                       .split('\n')[2]
                                       .split('DatanodeInfoWithStorage')[1]
-                                      .split(':')[0][1:]
-
+                                      .split(':')[0][1:])
