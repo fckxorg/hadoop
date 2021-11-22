@@ -13,12 +13,15 @@ subprocess.check_output(delete_local)
 gather_blocks = ['hdfs', 'fsck', '/tmp/kok.tmp', '-files', '-blocks', '-locations']
 blocks_info = subprocess.check_output(gather_blocks).decode('utf-8').split('BP')[1:]
 
-blks = []
-
 for block in blocks_info:
     blk_id = block.split(':')[1].split()[0]
-    blks.append(blk_id[:blk_id.rfind('_')])
-print(blks)
+    blk_id = blk_id[:blk_id.rfind('_')]
+    get_node_list = ['hdfs', 'fsck', '-blockId', blk_id]
+    node = subprocess.check_output(get_node_list).decode('utf-8')\
+                                       .split('Block replica on datanode/rack: ')[1]\
+                                       .split()[0]\
+                                       .split('/default')[0]
+    print(blk_id + ':' + node)
 
 delete_remote = ['hdfs', 'dfs', '-rm', '/tmp/kok.tmp']
 subprocess.check_output(delete_remote)
