@@ -21,7 +21,10 @@ for block in blocks_info:
                                        .split('Block replica on datanode/rack: ')[1]\
                                        .split()[0]\
                                        .split('/default')[0]
-    print(blk_id + ':' + node)
+    ssh_host = 'hdfsuser@' + node
+    ssh_command = ['sudo', '-u', 'hdfsuser', 'ssh', ssh_host, 'locate', blk_id]
+    path = subprocess.check_output(ssh_command).decode('utf-8').split()[0]
+    print(blk_id + ':' + path)
 
 delete_remote = ['hdfs', 'dfs', '-rm', '/tmp/kok.tmp']
 subprocess.check_output(delete_remote)
