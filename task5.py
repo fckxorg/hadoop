@@ -13,6 +13,8 @@ subprocess.check_output(delete_local)
 gather_blocks = ['hdfs', 'fsck', '/tmp/kok.tmp', '-files', '-blocks', '-locations']
 blocks_info = subprocess.check_output(gather_blocks).decode('utf-8').split('BP')[1:]
 
+cum_size = 0
+
 for block in blocks_info:
     blk_id = block.split(':')[1].split()[0]
     blk_id = blk_id[:blk_id.rfind('_')]
@@ -25,8 +27,10 @@ for block in blocks_info:
     ssh_command = ['sudo', '-u', 'hdfsuser', 'ssh', ssh_host, 'find', '/dfs', '-name', blk_id]
     path = subprocess.check_output(ssh_command).decode('utf-8').split()[0]
     ssh_command = ssh_command[:5] + ['stat', path, '-c', '"%b %B"']
-    size = subprocess.check_output(ssh_command).decode('utf-8').split()
-    print(int(size[0]) * int(size[1]))
+    stat = subprocess.check_output(ssh_command).decode('utf-8').split()
+    cum_size += int(stat[0]) * int(stat[1])
 
 delete_remote = ['hdfs', 'dfs', '-rm', '/tmp/kok.tmp']
 subprocess.check_output(delete_remote)
+
+print(cum_size)
