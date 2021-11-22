@@ -25,8 +25,8 @@ for block in blocks_info:
     ssh_command = ['sudo', '-u', 'hdfsuser', 'ssh', ssh_host, 'find', '/dfs', '-name', blk_id]
     path = subprocess.check_output(ssh_command).decode('utf-8').split()[0]
     ssh_command = ssh_command[:5] + ['stat', path, '-c', '"%b %B"']
-    size = subprocess.check_output(ssh_command).decode('utf-8')
-    print(size)
+    size = subprocess.check_output(ssh_command).decode('utf-8').split()
+    print(int(size[0]) * int(size[1]))
 
 delete_remote = ['hdfs', 'dfs', '-rm', '/tmp/kok.tmp']
 subprocess.check_output(delete_remote)
