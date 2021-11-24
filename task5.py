@@ -28,4 +28,4 @@ for block in block_ids:
     disk_size += int(exec('sudo -u hdfsuser ssh hdfsuser@' + url + ' wc -c ' + path)\
             .split()[0])
 exec('hdfs dfs -rm /tmp/test.tmp')
-print(disk_size)
+print(disk_size - int(sys.argv[1]))
