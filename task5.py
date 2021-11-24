@@ -1,35 +1,31 @@
 import sys
 import subprocess
 
-create = ['dd', 'if=/dev/zero', 'of=kok.tmp', 'bs=' + sys.argv[1], 'count=1']
-subprocess.check_output(create)
+def exec(cmd):
+    return subprocess.check_output(cmd.split()).decode('utf-8')
 
-put = ['hdfs', 'dfs', '-put', 'kok.tmp', '/tmp/kok.tmp']
-subprocess.check_output(put)
+exec('dd if=/dev/zero of=test.tmp bs=' + sys.argv[1] +' count=1')
+exec('hdfs dfs -put test.tmp /tmp/test.tmp')
+exec('rm test.tmp')
+raw_block_ids = exec('hdfs fsck /tmp/test.tmp -files -blocks -locations')\
+        .split('BP')[1:]
 
-delete_local = ['rm', 'kok.tmp']
-subprocess.check_output(delete_local)
+block_ids = []
+for block in raw_block_ids:
+    bid = block.split(':')[1].split()[0]
+    block_ids.append(bid[:bid.rfind('_')])
 
-gather_blocks = ['hdfs', 'fsck', '/tmp/kok.tmp', '-files', '-blocks', '-locations']
-blocks_info = subprocess.check_output(gather_blocks).decode('utf-8').split('BP')[1:]
+disk_size = 0
 
-cum_size = 0
+for block in block_ids:
+    url = exec('hdfs fsck -blockId ' + block)\
+            .split('Block replica on datanode/rack: ')[1]\
+            .split()[0]\
+            .split('/default')[0]
 
-for block in blocks_info:
-    blk_id = block.split(':')[1].split()[0]
-    blk_id = blk_id[:blk_id.rfind('_')]
-    get_node_list = ['hdfs', 'fsck', '-blockId', blk_id]
-    node = subprocess.check_output(get_node_list).decode('utf-8')\
-                                       .split('Block replica on datanode/rack: ')[1]\
-                                       .split()[0]\
-                                       .split('/default')[0]
-    ssh_host = 'hdfsuser@' + node
-    ssh_command = ['sudo', '-u', 'hdfsuser', 'ssh', ssh_host, 'find', '/dfs', '-name', blk_id]
-    path = subprocess.check_output(ssh_command).decode('utf-8').split()[0]
-    ssh_command = ssh_command[:5] + ['wc', '-c', path]
-    cum_size += int(subprocess.check_output(ssh_command).decode('utf-8').split()[0])
-
-delete_remote = ['hdfs', 'dfs', '-rm', '/tmp/kok.tmp']
-subprocess.check_output(delete_remote)
-
-print(cum_size)
+    path = exec('sudo -u hdfsuser ssh hdfsuser@' + url + ' find /dfs -name ' + block)\
+            .split()[0]
+    disk_size += int(exec('sudo -u hdfsuser ssh hdfsuser@' + url + ' wc -c ' + path)\
+            .split()[0])
+exec('hdfs dfs -rm /tmp/test.tmp')
+print(disk_size)
